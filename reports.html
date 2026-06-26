@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CTVMSS - Reports</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="reports">
+<div class="app-container">
+    <aside class="sidebar">
+        <div class="sidebar-header"><h2>🛡️ CTVMSS</h2><p>Cable Security System</p></div>
+        <div class="user-profile">
+            <div class="user-avatar" id="userAvatar">A</div>
+            <div class="user-info"><h4 id="userName">Admin</h4><span id="userRole">Administrator</span></div>
+        </div>
+        <ul class="sidebar-nav">
+            <li><a href="dashboard.html"><span class="icon">📊</span> Dashboard</a></li>
+            <li><a href="incidents.html"><span class="icon">🚨</span> Incidents</a></li>
+            <li><a href="assets.html"><span class="icon">🔌</span> Assets</a></li>
+            <li><a href="sensors.html"><span class="icon">📡</span> Sensors</a></li>
+            <li><a href="maps.html"><span class="icon">🗺️</span> GPS Tracking</a></li>
+            <li><a href="cctv.html"><span class="icon">📹</span> CCTV Monitoring</a></li>
+            <li><a href="ai.html"><span class="icon">🤖</span> AI Analytics</a></li>
+            <li><a href="reports.html" class="active"><span class="icon">📈</span> Reports</a></li>
+            <li><a href="users.html"><span class="icon">👥</span> Users</a></li>
+            <li><a href="settings.html"><span class="icon">⚙️</span> Settings</a></li>
+        </ul>
+        <div class="sidebar-footer">
+            <button class="sos-button" onclick="triggerSOS()"><span>🚨</span> EMERGENCY SOS</button>
+            <button class="btn btn-sm" style="width: 100%; margin-top: 10px; background: #374151; color: white;" onclick="logout()"><span>🚪</span> Logout</button>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="top-bar"><h1>📈 Reports & Analytics</h1></div>
+        <div class="card" style="margin-bottom: 20px;">
+            <div class="card-header"><h3>Report Parameters</h3></div>
+            <div class="card-body" style="display: flex; gap: 16px; align-items: end; flex-wrap: wrap;">
+                <div><label style="font-size: 12px; font-weight: 600; color: #64748b; display: block; margin-bottom: 4px;">Start Date</label><input type="date" id="reportStartDate" class="form-control" value="2024-01-01"></div>
+                <div><label style="font-size: 12px; font-weight: 600; color: #64748b; display: block; margin-bottom: 4px;">End Date</label><input type="date" id="reportEndDate" class="form-control" value="2024-12-31"></div>
+                <button class="btn btn-primary" onclick="generateReport()"><span>📊</span> Generate Report</button>
+                <button class="btn btn-success" onclick="showToast('Export feature coming soon', 'info')"><span>💾</span> Export PDF</button>
+            </div>
+        </div>
+        <div id="reportResults"><div class="card"><div class="card-body text-center" style="padding: 60px; color: #64748b;"><div style="font-size: 48px; margin-bottom: 16px;">📊</div><p>Click "Generate Report" to view incident analytics</p></div></div></div>
+    </main>
+</div>
+<script src="js/app.js"></script>
+</body>
+</html>

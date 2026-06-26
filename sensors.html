@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CTVMSS - Sensors</title>
+    <link rel="stylesheet" href="css/style.css">
+	<link rel="javascript" href="js/index.js">
+</head>
+<body data-page="sensors">
+<div class="app-container">
+    <aside class="sidebar">
+        <div class="sidebar-header"><h2>🛡️ CTVMSS</h2><p>Cable Security System</p></div>
+        <div class="user-profile"><div class="user-avatar" id="userAvatar">A</div><div class="user-info"><h4 id="userName">Admin</h4><span id="userRole">Administrator</span></div></div>
+        <ul class="sidebar-nav">
+            <li><a href="dashboard.html"><span class="icon">📊</span> Dashboard</a></li>
+            <li><a href="incidents.html"><span class="icon">🚨</span> Incidents</a></li>
+            <li><a href="assets.html"><span class="icon">🔌</span> Assets</a></li>
+            <li><a href="sensors.html" class="active"><span class="icon">📡</span> Sensors</a></li>
+            <li><a href="maps.html"><span class="icon">🗺️</span> GPS Tracking</a></li>
+            <li><a href="cctv.html"><span class="icon">📹</span> CCTV Monitoring</a></li>
+            <li><a href="ai.html"><span class="icon">🤖</span> AI Analytics</a></li>
+            <li><a href="reports.html"><span class="icon">📈</span> Reports</a></li>
+            <li><a href="users.html"><span class="icon">👥</span> Users</a></li>
+            <li><a href="settings.html"><span class="icon">⚙️</span> Settings</a></li>
+        </ul>
+        <div class="sidebar-footer">
+            <button class="sos-button" onclick="triggerSOS()"><span>🚨</span> EMERGENCY SOS</button>
+            <button class="btn btn-sm" style="width:100%;margin-top:10px;background:#374151;color:white;" onclick="logout()"><span>🚪</span> Logout</button>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="top-bar"><h1>📡 IoT Sensor Management</h1></div>
+        <div class="sensor-simulator" style="margin-bottom:24px;">
+            <h4>🧪 IoT Sensor Simulator</h4>
+            <p style="color:#94a3b8;font-size:14px;margin-bottom:16px;">Simulate sensor readings for testing purposes</p>
+            <div class="simulator-controls">
+                <div><label style="color:#cbd5e1;font-size:13px;display:block;margin-bottom:6px;">Sensor ID</label><input type="number" id="simSensorId" class="form-control" placeholder="e.g. 4" value="4"></div>
+                <div><label style="color:#cbd5e1;font-size:13px;display:block;margin-bottom:6px;">Reading Value</label><input type="number" id="simValue" class="form-control" placeholder="e.g. 12.5" value="12.5" step="0.1"></div>
+                <div><label style="color:#cbd5e1;font-size:13px;display:block;margin-bottom:6px;">Reading Type</label><select id="simType" class="form-control"><option value="vibration_g">Vibration (g)</option><option value="current_a">Current (A)</option><option value="temperature_c">Temperature (°C)</option><option value="motion_detected">Motion (binary)</option><option value="sound_db">Sound (dB)</option></select></div>
+                <div style="display:flex;align-items:end;gap:12px;"><label style="color:#cbd5e1;font-size:13px;display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" id="simAnomaly" style="width:18px;height:18px;">Trigger Anomaly</label></div>
+                <div style="display:flex;align-items:end;"><button class="btn btn-primary" onclick="simulateSensorData()"><span>📡</span> Send Reading</button></div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header"><h3>All IoT Sensors</h3></div>
+            <div class="card-body" style="padding:0;">
+                <table class="data-table">
+                    <thead><tr><th>ID</th><th>Type</th><th>Serial Number</th><th>Asset</th><th>Battery</th><th>Signal</th><th>Status</th><th>Actions</th></tr></thead>
+                    <tbody id="sensorsTable"><tr><td colspan="8" class="text-center">Loading sensors...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+<div class="modal-overlay" id="sensorModal">
+    <div class="modal" style="max-width:800px;">
+        <div class="modal-header"><h3>Sensor Readings</h3><button class="modal-close" onclick="closeModal('sensorModal')">&times;</button></div>
+        <div class="modal-body" id="sensorModalBody">Loading...</div>
+        <div class="modal-footer"><button class="btn" style="background:#e2e8f0;color:#475569;" onclick="closeModal('sensorModal')">Close</button></div>
+    </div>
+</div>
+<script src="js/app.js"></script>
+</body>
+</html>

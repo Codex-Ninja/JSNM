@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CTVMSS - Assets</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="assets">
+<div class="app-container">
+    <aside class="sidebar">
+        <div class="sidebar-header"><h2>🛡️ CTVMSS</h2><p>Cable Security System</p></div>
+        <div class="user-profile"><div class="user-avatar" id="userAvatar">A</div><div class="user-info"><h4 id="userName">Admin</h4><span id="userRole">Administrator</span></div></div>
+        <ul class="sidebar-nav">
+            <li><a href="dashboard.html"><span class="icon">📊</span> Dashboard</a></li>
+            <li><a href="incidents.html"><span class="icon">🚨</span> Incidents</a></li>
+            <li><a href="assets.html" class="active"><span class="icon">🔌</span> Assets</a></li>
+            <li><a href="sensors.html"><span class="icon">📡</span> Sensors</a></li>
+            <li><a href="maps.html"><span class="icon">🗺️</span> GPS Tracking</a></li>
+            <li><a href="cctv.html"><span class="icon">📹</span> CCTV Monitoring</a></li>
+            <li><a href="ai.html"><span class="icon">🤖</span> AI Analytics</a></li>
+            <li><a href="reports.html"><span class="icon">📈</span> Reports</a></li>
+            <li><a href="users.html"><span class="icon">👥</span> Users</a></li>
+            <li><a href="settings.html"><span class="icon">⚙️</span> Settings</a></li>
+        </ul>
+        <div class="sidebar-footer">
+            <button class="sos-button" onclick="triggerSOS()"><span>🚨</span> EMERGENCY SOS</button>
+            <button class="btn btn-sm" style="width:100%;margin-top:10px;background:#374151;color:white;" onclick="logout()"><span>🚪</span> Logout</button>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="top-bar"><h1>🔌 Asset Management</h1></div>
+        <div class="card">
+            <div class="card-header"><h3>Cable Infrastructure Assets</h3></div>
+            <div class="card-body" style="padding:0;">
+                <table class="data-table">
+                    <thead><tr><th>ID</th><th>Cable Name</th><th>Type</th><th>Location</th><th>Length</th><th>Status</th><th>Sensors</th><th>Actions</th></tr></thead>
+                    <tbody id="assetsTable"><tr><td colspan="8" class="text-center">Loading assets...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+<div class="modal-overlay" id="assetModal">
+    <div class="modal" style="max-width:700px;">
+        <div class="modal-header"><h3>Asset Details</h3><button class="modal-close" onclick="closeModal('assetModal')">&times;</button></div>
+        <div class="modal-body" id="assetModalBody">Loading...</div>
+        <div class="modal-footer"><button class="btn" style="background:#e2e8f0;color:#475569;" onclick="closeModal('assetModal')">Close</button></div>
+    </div>
+</div>
+<script src="js/app.js"></script>
+</body>
+</html>

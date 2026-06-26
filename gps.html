@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CTVMSS - GPS Tracking</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        .gps-page #map { height: 600px; border-radius: 12px; z-index: 1; }
+        .gps-page .map-container { position: relative; }
+        .gps-page .map-legend {
+            position: absolute; bottom: 20px; right: 20px; background: white;
+            padding: 16px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            z-index: 1000; font-size: 13px; min-width: 180px;
+        }
+        .gps-page .map-legend h4 { margin: 0 0 12px 0; font-size: 14px; color: #1e293b; }
+        .gps-page .legend-item { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+        .gps-page .legend-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 0 1px rgba(0,0,0,0.2); }
+        .gps-page .legend-dot.critical { background: #dc2626; }
+        .gps-page .legend-dot.high { background: #d97706; }
+        .gps-page .legend-dot.medium { background: #0891b2; }
+        .gps-page .legend-dot.low { background: #059669; }
+        .gps-page .legend-dot.offline { background: #64748b; }
+        .gps-page .gps-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px; }
+        .gps-page .location-list { max-height: 400px; overflow-y: auto; }
+        .gps-page .location-item {
+            padding: 14px 16px; border-radius: 10px; margin-bottom: 10px;
+            border-left: 4px solid; cursor: pointer; transition: all 0.2s;
+            background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .gps-page .location-item:hover { transform: translateX(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+        .gps-page .location-item.critical { border-left-color: #dc2626; background: #fef2f2; }
+        .gps-page .location-item.high { border-left-color: #d97706; background: #fffbeb; }
+        .gps-page .location-item.medium { border-left-color: #0891b2; background: #ecfeff; }
+        .gps-page .location-item.low { border-left-color: #059669; background: #f0fdf4; }
+        .gps-page .location-item h4 { margin: 0 0 6px 0; font-size: 15px; color: #1e293b; }
+        .gps-page .location-item p { margin: 0; font-size: 13px; color: #64748b; }
+        .gps-page .location-item .coords { font-family: monospace; font-size: 12px; color: #94a3b8; margin-top: 6px; }
+        .gps-page .location-item .badge { font-size: 11px; padding: 2px 8px; }
+        .gps-page .route-panel {
+            background: linear-gradient(135deg, #1e293b, #0f172a); border-radius: 12px;
+            padding: 20px; color: white; margin-bottom: 20px;
+        }
+        .gps-page .route-panel h3 { color: #60a5fa; margin-bottom: 16px; }
+        .gps-page .route-controls { display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end; }
+        .gps-page .route-controls .form-control { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); color: white; }
+        .gps-page .route-controls .form-control::placeholder { color: rgba(255,255,255,0.5); }
+        .gps-page .route-controls label { color: #94a3b8; font-size: 13px; }
+        .gps-page .live-tracking-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: #dcfce7; color: #166534; padding: 6px 14px;
+            border-radius: 20px; font-size: 13px; font-weight: 600;
+        }
+        .gps-page .live-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; animation: pulse-live 1.5s infinite; }
+        @keyframes pulse-live { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .gps-page .sensor-marker-popup h4 { margin: 0 0 8px 0; font-size: 15px; }
+        .gps-page .sensor-marker-popup p { margin: 4px 0; font-size: 13px; }
+        .gps-page .sensor-marker-popup .status-row { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1px solid #e2e8f0; }
+    </style>
+</head>
+<body data-page="maps" class="gps-page">
+<div class="app-container">
+    <aside class="sidebar">
+        <div class="sidebar-header"><h2>🛡️ CTVMSS</h2><p>Cable Security System</p></div>
+        <div class="user-profile"><div class="user-avatar" id="userAvatar">A</div><div class="user-info"><h4 id="userName">Admin</h4><span id="userRole">Administrator</span></div></div>
+        <ul class="sidebar-nav">
+            <li><a href="dashboard.html"><span class="icon">📊</span> Dashboard</a></li>
+            <li><a href="incidents.html"><span class="icon">🚨</span> Incidents</a></li>
+            <li><a href="assets.html"><span class="icon">🔌</span> Assets</a></li>
+            <li><a href="sensors.html"><span class="icon">📡</span> Sensors</a></li>
+            <li><a href="maps.html" class="active"><span class="icon">🗺️</span> GPS Tracking</a></li>
+            <li><a href="cctv.html"><span class="icon">📹</span> CCTV Monitoring</a></li>
+            <li><a href="ai.html"><span class="icon">🤖</span> AI Analytics</a></li>
+            <li><a href="reports.html"><span class="icon">📈</span> Reports</a></li>
+            <li><a href="users.html"><span class="icon">👥</span> Users</a></li>
+            <li><a href="settings.html"><span class="icon">⚙️</span> Settings</a></li>
+        </ul>
+        <div class="sidebar-footer">
+            <button class="sos-button" onclick="triggerSOS()"><span>🚨</span> EMERGENCY SOS</button>
+            <button class="btn btn-sm" style="width:100%;margin-top:10px;background:#374151;color:white;" onclick="logout()"><span>🚪</span> Logout</button>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="top-bar">
+            <h1>🗺️ Live GPS Tracking</h1>
+            <div class="top-bar-actions">
+                <span class="live-tracking-badge"><span class="live-dot"></span> Live Tracking</span>
+                <button class="btn btn-primary" onclick="refreshMap()"><span>🔄</span> Refresh</button>
+                <button class="btn btn-success" onclick="centerOnMyLocation()"><span>📍</span> My Location</button>
+            </div>
+        </div>
+
+        <!-- GPS Stats -->
+        <div class="gps-stats">
+            <div class="stat-card danger"><div class="label">Critical Sites</div><div class="value" id="criticalSites">0</div><div class="icon-bg">⚠️</div></div>
+            <div class="stat-card warning"><div class="label">High Risk</div><div class="value" id="highRiskSites">0</div><div class="icon-bg">🔥</div></div>
+            <div class="stat-card info"><div class="label">Medium Risk</div><div class="value" id="mediumRiskSites">0</div><div class="icon-bg">📍</div></div>
+            <div class="stat-card success"><div class="label">Low Risk</div><div class="value" id="lowRiskSites">0</div><div class="icon-bg">✅</div></div>
+            <div class="stat-card primary"><div class="label">Total Monitored</div><div class="value" id="totalMonitored">0</div><div class="icon-bg">📡</div></div>
+            <div class="stat-card secondary"><div class="label">Active Incidents</div><div class="value" id="activeIncidentsGPS">0</div><div class="icon-bg">🚨</div></div>
+        </div>
+
+        <!-- Route Planning Panel -->
+        <div class="route-panel">
+            <h3>🚁 Route Planning & Dispatch</h3>
+            <div class="route-controls">
+                <div>
+                    <label>From Location</label>
+                    <select id="routeFrom" class="form-control">
+                        <option value="">Select origin...</option>
+                    </select>
+                </div>
+                <div>
+                    <label>To Location</label>
+                    <select id="routeTo" class="form-control">
+                        <option value="">Select destination...</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" onclick="calculateRoute()" style="height:46px;"><span>🚗</span> Get Route</button>
+            </div>
+            <div id="routeInfo" style="margin-top:12px;font-size:13px;color:#94a3b8;display:none;"></div>
+        </div>
+
+        <!-- Map + Location List -->
+        <div style="display:grid;grid-template-columns:1fr 350px;gap:20px;">
+            <div class="map-container">
+                <div id="map"></div>
+                <div class="map-legend">
+                    <h4>📍 Risk Levels</h4>
+                    <div class="legend-item"><div class="legend-dot critical"></div><span>Critical Risk</span></div>
+                    <div class="legend-item"><div class="legend-dot high"></div><span>High Risk</span></div>
+                    <div class="legend-item"><div class="legend-dot medium"></div><span>Medium Risk</span></div>
+                    <div class="legend-item"><div class="legend-dot low"></div><span>Low Risk</span></div>
+                    <div class="legend-item"><div class="legend-dot offline"></div><span>Offline/Unknown</span></div>
+                </div>
+            </div>
+            <div>
+                <div class="card" style="margin-bottom:16px;">
+                    <div class="card-header"><h3>📋 Monitored Locations</h3></div>
+                    <div class="card-body location-list" id="locationList" style="padding:12px;">
+                        <div class="loading"><div class="spinner"></div></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><h3>🛰️ GPS Coordinates</h3></div>
+                    <div class="card-body" style="padding:16px;">
+                        <p style="font-size:13px;color:#64748b;margin-bottom:8px;">Click anywhere on the map to get coordinates.</p>
+                        <div id="clickedCoords" style="font-family:monospace;font-size:14px;background:#f8fafc;padding:12px;border-radius:8px;color:#1e293b;">
+                            Lat: --<br>Lng: --
+                        </div>
+                        <button class="btn btn-sm btn-primary" style="width:100%;margin-top:10px;" onclick="copyCoords()">📋 Copy Coordinates</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ========== GPS TRACKING PAGE SPECIFIC CODE ==========
+
+let gpsMap = null;
+let gpsMarkers = [];
+let gpsRouteLayer = null;
+let routeLine = null;
+let locationData = [];
+let lastClickedCoords = null;
+
+async function initGPSMap() {
+    if (!document.getElementById('map')) return;
+    
+    // Default center (Johannesburg, South Africa)
+    const defaultLat = -26.2041;
+    const defaultLng = 28.0473;
+    
+    gpsMap = L.map('map').setView([defaultLat, defaultLng], 10);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(gpsMap);
+    
+    // Click handler to show coordinates
+    gpsMap.on('click', function(e) {
+        lastClickedCoords = e.latlng;
+        document.getElementById('clickedCoords').innerHTML = 
+            `Lat: ${e.latlng.lat.toFixed(6)}<br>Lng: ${e.latlng.lng.toFixed(6)}`;
+    });
+    
+    await loadGPSMarkers();
+    await loadLocationList();
+    await populateRouteSelects();
+}
+
+async function loadGPSMarkers() {
+    if (!gpsMap) return;
+    
+    // Clear existing markers
+    gpsMarkers.forEach(m => gpsMap.removeLayer(m));
+    gpsMarkers = [];
+    
+    const locations = await apiGet('/locations');
+    if (!locations) return;
+    
+    locationData = locations;
+    
+    // Update stats
+    const stats = { Critical: 0, High: 0, Medium: 0, Low: 0 };
+    let totalIncidents = 0;
+    
+    locations.forEach(loc => {
+        stats[loc.risk_level] = (stats[loc.risk_level] || 0) + 1;
+        totalIncidents += loc.active_incidents || 0;
+        
+        const color = loc.risk_level === 'Critical' ? '#dc2626' :
+                     loc.risk_level === 'High' ? '#d97706' :
+                     loc.risk_level === 'Medium' ? '#0891b2' : '#059669';
+        
+        const radius = 10 + ((loc.active_incidents || 0) * 4);
+        
+        // Main marker
+        const marker = L.circleMarker([loc.latitude, loc.longitude], {
+            radius: radius,
+            fillColor: color,
+            color: '#fff',
+            weight: 3,
+            opacity: 1,
+            fillOpacity: 0.85
+        }).addTo(gpsMap);
+        
+        // Popup content
+        const popupContent = `
+            <div class="sensor-marker-popup">
+                <h4>📍 ${loc.site_name}</h4>
+                <p><strong>Municipality:</strong> ${loc.municipality || 'N/A'}</p>
+                <p><strong>Province:</strong> ${loc.province || 'N/A'}</p>
+                <p><strong>Risk Level:</strong> <span style="color:${color};font-weight:bold;">${loc.risk_level}</span></p>
+                <p><strong>Assets:</strong> ${loc.asset_count || 0}</p>
+                <p><strong>Active Incidents:</strong> ${loc.active_incidents || 0}</p>
+                <div class="status-row">
+                    <span>Coords: ${loc.latitude}, ${loc.longitude}</span>
+                </div>
+                <div style="margin-top:10px;display:flex;gap:6px;">
+                    <button onclick="focusGPSLocation(${loc.latitude}, ${loc.longitude})" style="padding:4px 10px;background:#1e40af;color:white;border:none;border-radius:4px;cursor:pointer;font-size:12px;">🔍 Focus</button>
+                    <button onclick="dispatchToLocation('${loc.site_name}', ${loc.latitude}, ${loc.longitude})" style="padding:4px 10px;background:#dc2626;color:white;border:none;border-radius:4px;cursor:pointer;font-size:12px;">🚁 Dispatch</button>
+                </div>
+            </div>
+        `;
+        
+        marker.bindPopup(popupContent);
+        gpsMarkers.push(marker);
+        
+        // Add pulsing effect for critical/high risk
+        if (loc.risk_level === 'Critical' || loc.risk_level === 'High') {
+            const pulseMarker = L.circleMarker([loc.latitude, loc.longitude], {
+                radius: radius + 8,
+                fillColor: 'transparent',
+                color: color,
+                weight: 2,
+                opacity: 0.4,
+                fillOpacity: 0
+            }).addTo(gpsMap);
+            gpsMarkers.push(pulseMarker);
+        }
+    });
+    
+    // Update stat cards
+    document.getElementById('criticalSites').textContent = stats.Critical;
+    document.getElementById('highRiskSites').textContent = stats.High;
+    document.getElementById('mediumRiskSites').textContent = stats.Medium;
+    document.getElementById('lowRiskSites').textContent = stats.Low;
+    document.getElementById('totalMonitored').textContent = locations.length;
+    document.getElementById('activeIncidentsGPS').textContent = totalIncidents;
+}
+
+async function loadLocationList() {
+    const container = document.getElementById('locationList');
+    if (!container) return;
+    
+    const locations = locationData.length > 0 ? locationData : await apiGet('/locations');
+    if (!locations) {
+        container.innerHTML = '<p class="text-center" style="padding:20px;color:#64748b;">No locations found.</p>';
+        return;
+    }
+    
+    container.innerHTML = locations.map(loc => {
+        const riskClass = (loc.risk_level || 'low').toLowerCase();
+        const color = loc.risk_level === 'Critical' ? '#dc2626' :
+                     loc.risk_level === 'High' ? '#d97706' :
+                     loc.risk_level === 'Medium' ? '#0891b2' : '#059669';
+        
+        return `
+            <div class="location-item ${riskClass}" onclick="focusGPSLocation(${loc.latitude}, ${loc.longitude})">
+                <h4>${loc.site_name}</h4>
+                <p>${loc.municipality || 'Unknown'}, ${loc.province || 'Unknown'}</p>
+                <div class="coords">${loc.latitude.toFixed(4)}, ${loc.longitude.toFixed(4)}</div>
+                <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
+                    <span class="badge badge-${riskClass === 'critical' ? 'danger' : riskClass === 'high' ? 'warning' : riskClass === 'medium' ? 'info' : 'success'}">${loc.risk_level}</span>
+                    <span class="badge badge-secondary">${loc.asset_count || 0} Assets</span>
+                    ${loc.active_incidents > 0 ? `<span class="badge badge-danger">${loc.active_incidents} Incidents</span>` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+async function populateRouteSelects() {
+    const locations = locationData.length > 0 ? locationData : await apiGet('/locations');
+    if (!locations) return;
+    
+    const fromSelect = document.getElementById('routeFrom');
+    const toSelect = document.getElementById('routeTo');
+    
+    const options = locations.map(loc => 
+        `<option value="${loc.latitude},${loc.longitude}">${loc.site_name} (${loc.risk_level})</option>`
+    ).join('');
+    
+    fromSelect.innerHTML = '<option value="">Select origin...</option>' + options;
+    toSelect.innerHTML = '<option value="">Select destination...</option>' + options;
+}
+
+function focusGPSLocation(lat, lng) {
+    if (gpsMap) {
+        gpsMap.setView([lat, lng], 16);
+        // Find and open popup
+        gpsMarkers.forEach(m => {
+            if (m.getLatLng && Math.abs(m.getLatLng().lat - lat) < 0.0001 && Math.abs(m.getLatLng().lng - lng) < 0.0001) {
+                m.openPopup();
+            }
+        });
+    }
+}
+
+function calculateRoute() {
+    const fromVal = document.getElementById('routeFrom').value;
+    const toVal = document.getElementById('routeTo').value;
+    const infoDiv = document.getElementById('routeInfo');
+    
+    if (!fromVal || !toVal) {
+        showToast('Please select both origin and destination', 'warning');
+        return;
+    }
+    
+    const [fromLat, fromLng] = fromVal.split(',').map(Number);
+    const [toLat, toLng] = toVal.split(',').map(Number);
+    
+    // Remove existing route
+    if (routeLine) {
+        gpsMap.removeLayer(routeLine);
+    }
+    
+    // Draw route line
+    routeLine = L.polyline([[fromLat, fromLng], [toLat, toLng]], {
+        color: '#1e40af',
+        weight: 4,
+        opacity: 0.8,
+        dashArray: '10, 10'
+    }).addTo(gpsMap);
+    
+    // Calculate distance (Haversine formula)
+    const R = 6371; // Earth's radius in km
+    const dLat = (toLat - fromLat) * Math.PI / 180;
+    const dLng = (toLng - fromLng) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(fromLat * Math.PI / 180) * Math.cos(toLat * Math.PI / 180) *
+              Math.sin(dLng/2) * Math.sin(dLng/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const distance = R * c;
+    
+    // Estimate time (assuming 60km/h average)
+    const timeHours = distance / 60;
+    const timeMinutes = Math.round(timeHours * 60);
+    
+    infoDiv.style.display = 'block';
+    infoDiv.innerHTML = `
+        <span style="color:#60a5fa;">📏 Distance:</span> ${distance.toFixed(2)} km &nbsp;|&nbsp;
+        <span style="color:#60a5fa;">⏱️ Est. Time:</span> ${timeMinutes} min &nbsp;|&nbsp;
+        <span style="color:#60a5fa;">🚗 Route:</span> Direct path displayed
+    `;
+    
+    // Fit bounds to show both points
+    gpsMap.fitBounds(routeLine.getBounds(), { padding: [50, 50] });
+    
+    showToast(`Route calculated: ${distance.toFixed(2)} km`, 'success');
+}
+
+function dispatchToLocation(name, lat, lng) {
+    if (confirm(`🚁 Dispatch emergency response team to ${name}?\n\nCoordinates: ${lat.toFixed(6)}, ${lng.toFixed(6)}`)) {
+        showToast(`🚨 Dispatch alert sent for ${name}!`, 'error');
+        playAlertSound();
+    }
+}
+
+function centerOnMyLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                gpsMap.setView([lat, lng], 14);
+                
+                // Add user location marker
+                const userMarker = L.circleMarker([lat, lng], {
+                    radius: 8,
+                    fillColor: '#3b82f6',
+                    color: '#fff',
+                    weight: 3,
+                    fillOpacity: 1
+                }).addTo(gpsMap);
+                userMarker.bindPopup('📍 Your Location');
+                gpsMarkers.push(userMarker);
+                
+                showToast('Centered on your location', 'success');
+            },
+            () => {
+                showToast('Could not get your location', 'warning');
+            }
+        );
+    } else {
+        showToast('Geolocation not supported', 'warning');
+    }
+}
+
+function refreshMap() {
+    loadGPSMarkers();
+    loadLocationList();
+    showToast('Map refreshed', 'success');
+}
+
+function copyCoords() {
+    if (!lastClickedCoords) {
+        showToast('Click on the map first to get coordinates', 'warning');
+        return;
+    }
+    const text = `${lastClickedCoords.lat.toFixed(6)}, ${lastClickedCoords.lng.toFixed(6)}`;
+    navigator.clipboard.writeText(text).then(() => {
+        showToast('Coordinates copied to clipboard!', 'success');
+    }).catch(() => {
+        showToast('Failed to copy coordinates', 'error');
+    });
+}
+
+// Override the initMap function for this page
+document.addEventListener('DOMContentLoaded', () => {
+    if (document.body.dataset.page === 'maps') {
+        if (!checkAuth()) return;
+        initGPSMap();
+    }
+});
+</script>
+<script src="js/app.js"></script>
+</body>
+</html>
